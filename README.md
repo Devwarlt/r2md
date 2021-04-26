@@ -3,6 +3,9 @@
 # R2MD: Rancher to Markdown [![license-badge]][license]
 This is a tool that wraps version details from all PODs on Rancher to Markdown using Python utilities with Selenium Web Driver.
 
+## Disclaimer
+This tool works on Rancher version **v2.4.8** only.
+
 ## Languages
 ![python-language-badge] ![jupyter-language-badge]
 
