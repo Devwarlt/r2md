@@ -1,0 +1,11 @@
+# Python notebook
+.ipynb_checkpoints/*
+
+# Binaries
+*.exe
+*.zip
+*.rar
+*.7z
+
+# Logs
+[Ll]ogs/*
