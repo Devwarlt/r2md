@@ -1,5 +1,4 @@
 app_config: dict = {
-    'auth': (),  # this is replaced during runtime
     'name': 'R2MD',
     'log_level': 2,
     'description':
@@ -15,8 +14,12 @@ app_config: dict = {
         '\t██║░░██║███████╗██║░╚═╝░██║██████╔╝\n'
         '\t╚═╝░░╚═╝╚══════╝╚═╝░░░░░╚═╝╚═════╝░',
     'rancher': {
-        'url': 'https://rancher.fabrica.local',
+        'base_url': None,  # this is replaced during runtime
         'endpoint': None,  # this is replaced during runtime
-        'token': None  # this is replaced during runtime
+        'username': None,  # this is replaced during runtime
+        'password': None  # this is replaced during runtime
+    },
+    'static': {
+        'api_keys': '/apikeys'
     }
 }
