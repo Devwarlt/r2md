@@ -20,6 +20,8 @@ app_config: dict = {
         'password': None  # this is replaced during runtime
     },
     'static': {
-        'api_keys': '/apikeys'
-    }
+        'api_keys': '/apikeys',
+        'clusters': '/clusters'
+    },
+    'internal': {}  # this is replaced during runtime
 }
