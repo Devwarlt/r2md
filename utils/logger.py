@@ -25,6 +25,20 @@ class Log:
     def __log(self) -> Logger:
         return self.__logs.get(self.__nome)
 
+    def get_basic_config(self) -> dict:
+        formatter: Formatter = Formatter(
+            '%(asctime)s,%(msecs)-3d - %(name)-12s - %(levelname)-8s => '
+            '%(message)s')
+        basic_config: dict = {
+            'format': vars(formatter).get('_fmt'),
+            'datefmt': '%Y-%m-%d %H:%M:%S',
+            'level': self.__level
+        }
+        return basic_config
+
+    def apply_basic_config(self, basic_config: dict) -> None:
+        basicConfig(**basic_config)
+
     @staticmethod
     def __log_level(level: int) -> int:
         if level == 1:
@@ -55,7 +69,7 @@ class Log:
         args: dict = kwargs.pop('args', {})
         if args:
             for key, value in args.items():
-                message += f"\n- {key}:\n{value}"
+                message += f"\n- {key}: {value}"
         return message
 
     @staticmethod
@@ -87,18 +101,12 @@ class Log:
         message: str = Log.__format_message(self._CRITICAL, text, **kwargs)
         self.__log().critical(message)
 
-    def add_dependency(self, nome: str, nivel: int) -> None:
-        self.__dependencies.update({nome: nivel})
+    def add_dependency(self, name: str, level: int) -> None:
+        self.__dependencies.update({name: level})
 
     def configure(self) -> None:
-        formatter: Formatter = Formatter(
-            '%(asctime)s,%(msecs)-3d - %(name)-12s - %(levelname)-8s => '
-            '%(message)s')
-
-        basicConfig(
-            format=vars(formatter).get('_fmt'),
-            datefmt='%Y-%m-%d %H:%M:%S',
-            level=self.__level)
+        basic_config: dict = self.get_basic_config()
+        self.apply_basic_config(basic_config)
 
         main_log: Logger = getLogger(self.__nome)
         main_log.setLevel(self.__level)
