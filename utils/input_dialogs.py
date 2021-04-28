@@ -1,5 +1,5 @@
-from utils.logger import Log
 from extensions.str import is_null_or_whitespace
+from utils.logger import Log
 
 
 def yes_or_no_input_dialog(question: str) -> bool:

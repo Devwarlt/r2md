@@ -1,8 +1,8 @@
 from utils.local_settings import LocalSettings
-from config import app_config
-from utils.logger import Log
 from utils.input_dialogs import confirm_input_dialog
 from extensions.url import format_url
+from config import app_config
+from utils.logger import Log
 
 
 def ask_for_new_credentials() -> None:

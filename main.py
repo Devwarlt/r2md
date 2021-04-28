@@ -1,13 +1,13 @@
 from utils.reload_credentials import ask_for_new_credentials
-from utils.rancher_api_mediator import RancherAPIMediator
 from utils.input_dialogs import confirm_input_dialog
-from utils.logger import Log
-from utils.local_settings import LocalSettings
 from extensions.url import format_url, get_base_url
-from config import app_config
-from traceback import format_exc
-from sys import exit
+from utils.local_settings import LocalSettings
+from utils.api_mediator import APIMediator
 from urllib3 import disable_warnings
+from traceback import format_exc
+from config import app_config
+from utils.logger import Log
+from sys import exit
 
 __exit_code: int = 0
 __log: Log = Log(app_config['name'], app_config['log_level'])
@@ -60,7 +60,7 @@ try:
     app_config['rancher']['endpoint'] = r_endpoint
 
     LocalSettings.save()
-    RancherAPIMediator.core()
+    APIMediator.core()
 except KeyboardInterrupt:
     __log.warning(f"{app_config['name']} is preparing to shutdown...")
 except Exception as error:

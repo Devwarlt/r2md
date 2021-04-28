@@ -1,10 +1,10 @@
 from pathlib import Path
+from typing import Any
 from logging import (
     Logger, Formatter, getLogger,
     basicConfig, NOTSET, DEBUG,
     INFO, WARNING, ERROR, FATAL
 )
-from typing import Any
 
 __LOG = None
 
