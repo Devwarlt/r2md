@@ -1,3 +1,5 @@
+from utils.reload_credentials import ask_for_new_credentials
+from utils.rancher_api_mediator import RancherAPIMediator
 from utils.input_dialogs import confirm_input_dialog
 from utils.logger import Log
 from utils.local_settings import LocalSettings
@@ -5,10 +7,13 @@ from extensions.url import format_url, get_base_url
 from config import app_config
 from traceback import format_exc
 from sys import exit
+from urllib3 import disable_warnings
 
 __exit_code: int = 0
 __log: Log = Log(app_config['name'], app_config['log_level'])
 __log.configure()
+
+disable_warnings()
 
 Log.set_singleton(__log)
 
@@ -42,27 +47,20 @@ try:
             if not r_password:
                 r_password = confirm_input_dialog(
                     "Insert your Rancher Secret Key (password):")
+
+            app_config['rancher']['username'] = r_username
+            app_config['rancher']['password'] = r_password
     else:
         r_endpoint = confirm_input_dialog("Insert the Rancher endpoint:")
         r_base_url: str = get_base_url(r_endpoint)
 
-        __log.warning(
-            "Provide your credentials to access Rancher API.\n"
-            "If you don't have any API key yet, consider to visit:\n"
-            f"\t{format_url(r_base_url, app_config['static']['api_keys'])}"
-        )
-
-        r_username = confirm_input_dialog(
-            "Insert your Rancher Access Key (username):")
-        r_password = confirm_input_dialog(
-            "Insert your Rancher Secret Key (password):")
+        ask_for_new_credentials()
 
     app_config['rancher']['base_url'] = r_base_url
     app_config['rancher']['endpoint'] = r_endpoint
-    app_config['rancher']['username'] = r_username
-    app_config['rancher']['password'] = r_password
 
     LocalSettings.save()
+    RancherAPIMediator.core()
 except KeyboardInterrupt:
     __log.warning(f"{app_config['name']} is preparing to shutdown...")
 except Exception as error:
