@@ -12,3 +12,6 @@ __pycache__/
 
 # Logs
 [Ll]ogs/*
+
+# Settings
+.r2md.settings.json
