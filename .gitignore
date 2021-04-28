@@ -1,6 +1,9 @@
 # Python notebook
 .ipynb_checkpoints/*
 
+# Python Caches
+__pycache__/
+
 # Binaries
 *.exe
 *.zip
