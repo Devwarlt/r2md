@@ -1,5 +1,7 @@
 > 🚧 **Important!** This tool is still under development, must await for further updates.
 
+[![rancher-logo](rancher-logo.png)](#)
+
 # R2MD: Rancher to Markdown [![license-badge]][license]
 R2MD is a tool that wraps version details from all PODs via Rancher API and prettify results using Markdown notation.
 
