@@ -11,8 +11,7 @@ This tool works on Rancher version **v2.4.8** only.
 
 ## Workstation Setup
 1. **Step 1** - install [Python][ref-1];
-1. **Step 2** - install [Anaconda][ref-2];
-1. **Step 3** - install requirements:
+1. **Step 2** - install requirements:
 
 <details open>
   
@@ -34,4 +33,3 @@ This tool works on Rancher version **v2.4.8** only.
 [license]: /LICENSE
 
 [ref-1]: https://www.python.org/downloads/
-[ref-2]: https://docs.anaconda.com/anaconda/install/
