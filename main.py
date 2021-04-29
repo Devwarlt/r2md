@@ -20,10 +20,10 @@ Log.set_singleton(__log)
 try:
     __log.info(
         f"Hello, world!\n"
-        f"{'~' * 50}\n"
+        f"{'~' * 63}\n"
         f"{app_config['title']}\n\n"
         f"{app_config['description']}\n"
-        f"{'~' * 50}")
+        f"{'~' * 63}")
 
     success, settings = LocalSettings.try_load()
     if success and LocalSettings.try_parse(settings):

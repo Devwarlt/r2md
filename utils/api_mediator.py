@@ -183,10 +183,12 @@ class APIMediator:
             workload_id: str = workload_data.get('id')
             workload_name: str = workload_data.get('name')
             workload_containers: list = workload_data.get('containers', [])
+            workload_namespace: str = workload_data.get('namespaceId')
             workload: dict = {
                 'id': workload_id,
                 'name': workload_name,
-                'containers': workload_containers
+                'containers': workload_containers,
+                'namespace': workload_namespace
             }
             workloads.append(workload)
 
