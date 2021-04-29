@@ -24,6 +24,7 @@ This tool works on Rancher version **v2.4.8** only.
 
 ### Contributors
 - Nádio ~ [@Devwarlt][nadio-ref]
+- UnB Back-end Developers ~ Cortex Team
 
 [nadio-ref]: https://github.com/Devwarlt
 
