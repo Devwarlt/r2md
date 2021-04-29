@@ -4,7 +4,7 @@
 R2MD is a tool that wraps version details from all PODs via Rancher API and prettify results using Markdown notation.
 
 ## Disclaimer
-This tool works on Rancher version **v2.4.8** only.
+This tool works on Rancher version **v2.0** to **v2.4** only, see documentation [here](https://rancher.com/docs/rancher/v2.0-v2.4/en/) for more details.
 
 ## Languages
 ![python-language-badge]
