@@ -1,3 +1,4 @@
+from utils.markdown_mediator import MarkdownMediator
 from utils.reload_credentials import ask_for_new_credentials
 from utils.input_dialogs import yes_or_no_input_dialog
 from extensions.url import format_url
@@ -75,6 +76,10 @@ class RancherMediator:
         internal[key] = value
         app_config['internal'] = internal
         return True
+
+    @staticmethod
+    def __get_entries() -> dict:
+        return app_config['internal']
 
     @staticmethod
     def __validate_credentials() -> bool:
@@ -235,10 +240,6 @@ class RancherMediator:
     @staticmethod
     def core() -> None:
         log: Log = Log.get_singleton()
-        log.info(
-            "Initializing internal services!",
-            origin='Rancher'
-        )
 
         while True:
             if not RancherMediator.__validate_credentials():
@@ -314,6 +315,9 @@ class RancherMediator:
                             )
                             continue
                 RancherMediator.__try_update_value('clusters', clusters)
+
+            entries: dict = RancherMediator.__get_entries()
+            MarkdownMediator.build_report(entries)
             break
 
         log.warning(
