@@ -181,7 +181,7 @@ class RancherMediator:
     def __try_fetch_workloads(project: dict) -> bool:
         project_id: str = project.get('id')
         project_name: str = project.get('name')
-        project_links: dict = project.get('links')
+        project_links: dict = project.pop('links')
 
         log: Log = Log.get_singleton()
         log.info(
@@ -204,7 +204,7 @@ class RancherMediator:
             workload_data: dict = data[i]
             workload_id: str = workload_data.get('id')
             workload_name: str = workload_data.get('name')
-            workload_containers: list = workload_data.get('containers', [])
+            workload_containers: list = workload_data.get('containers')
             workload_namespace: str = workload_data.get('namespaceId')
             workload: dict = {
                 'id': workload_id,
@@ -219,17 +219,17 @@ class RancherMediator:
 
     @staticmethod
     def __try_wraps_version(workload: dict) -> bool:
-        workload_containers: list = workload.get('containers')
+        workload_containers: list = workload.pop('containers')
         if not workload_containers:
             return False
 
         workload_version: str = None
         for i in range(len(workload_containers)):
             workload_container: dict = workload_containers[i]
-            if not 'environment' in workload_container:
+            container_image: str = workload_container.get('image')
+            if not container_image.__contains__(':'):
                 continue
 
-            container_image: str = workload_container.get('image')
             container_version_split: str = container_image.split(':')
             workload_version = container_version_split[1]
             break
