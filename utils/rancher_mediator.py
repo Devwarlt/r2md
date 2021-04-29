@@ -9,7 +9,7 @@ from typing import Any
 from json import loads
 
 
-class APIMediator:
+class RancherMediator:
     def __init__(self) -> None:
         pass
 
@@ -81,7 +81,7 @@ class APIMediator:
 
         status_code: int = 0
         content: dict = {}
-        status_code, content = APIMediator.__get_response()
+        status_code, content = RancherMediator.__get_response()
         if status_code != 200:
             log.error(
                 "Unable to authenticate! Consider to check your credentials.",
@@ -102,9 +102,9 @@ class APIMediator:
         status_code: int = 0
         content: dict = {}
         path: str = app_config['static']['clusters']
-        status_code, content = APIMediator.__get_response(path)
+        status_code, content = RancherMediator.__get_response(path)
         if status_code != 200:
-            APIMediator.__handle_bad_response(status_code, content)
+            RancherMediator.__handle_bad_response(status_code, content)
             return False
 
         clusters: list = []
@@ -119,7 +119,7 @@ class APIMediator:
             }
             clusters.append(cluster)
 
-        APIMediator.__add_key_value_pair('clusters', clusters)
+        RancherMediator.__add_key_value_pair('clusters', clusters)
         return True
 
     @staticmethod
@@ -135,9 +135,9 @@ class APIMediator:
         status_code: int = 0
         content: dict = {}
         path: str = f"{app_config['static']['clusters']}/{cluster_id}/projects"
-        status_code, content = APIMediator.__get_response(path)
+        status_code, content = RancherMediator.__get_response(path)
         if status_code != 200:
-            APIMediator.__handle_bad_response(status_code, content)
+            RancherMediator.__handle_bad_response(status_code, content)
             return False
 
         projects: list = []
@@ -171,9 +171,9 @@ class APIMediator:
         status_code: int = 0
         content: dict = {}
         path: str = project_links.get('workloads')
-        status_code, content = APIMediator.__get_response(path, raw=True)
+        status_code, content = RancherMediator.__get_response(path, raw=True)
         if status_code != 200:
-            APIMediator.__handle_bad_response(status_code, content)
+            RancherMediator.__handle_bad_response(status_code, content)
             return False
 
         workloads: list = []
@@ -221,20 +221,20 @@ class APIMediator:
         log.info("Initializing internal services!")
 
         while True:
-            if not APIMediator.__validate_credentials():
+            if not RancherMediator.__validate_credentials():
                 if yes_or_no_input_dialog("Do you want to retry with new credentials?"):
                     ask_for_new_credentials()
                     continue
                 else:
                     break
 
-            if not APIMediator.__try_fetch_clusters():
+            if not RancherMediator.__try_fetch_clusters():
                 log.error(
                     "Unable to fetch any cluster! Therefore, I cannot proceed...")
                 break
 
             clusters: list = []
-            _, clusters = APIMediator.__try_get_value('clusters')
+            _, clusters = RancherMediator.__try_get_value('clusters')
 
             log.info(
                 "Clusters detected in Rancher!",
@@ -242,7 +242,7 @@ class APIMediator:
 
             for i in range(len(clusters)):
                 cluster: dict = clusters[i]
-                if not APIMediator.__try_fetch_projects(cluster):
+                if not RancherMediator.__try_fetch_projects(cluster):
                     log.warning(
                         "Well... There is no project for "
                         f"cluster '{cluster.get('name')}'.")
@@ -256,7 +256,7 @@ class APIMediator:
 
                 for i in range(len(projects)):
                     project: dict = projects[i]
-                    if not APIMediator.__try_fetch_workloads(project):
+                    if not RancherMediator.__try_fetch_workloads(project):
                         log.warning(
                             "Well... There is no workload for "
                             f"project '{project.get('name')}' "
@@ -272,14 +272,14 @@ class APIMediator:
 
                     for j in range(len(workloads)):
                         workload: dict = workloads[j]
-                        if not APIMediator.__try_wraps_version(workload):
+                        if not RancherMediator.__try_wraps_version(workload):
                             log.warning(
                                 "Well... There is no container for "
                                 f"workload '{workload.get('name')}' "
                                 f"in project '{project.get('name')}' "
                                 f"from cluster '{cluster.get('name')}'.")
                             continue
-                APIMediator.__try_update_value('clusters', clusters)
+                RancherMediator.__try_update_value('clusters', clusters)
             break
 
         log.warning("All services are preparing to shutdown...")

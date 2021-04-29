@@ -2,7 +2,7 @@ from utils.reload_credentials import ask_for_new_credentials
 from utils.input_dialogs import confirm_input_dialog
 from extensions.url import format_url, get_base_url
 from utils.local_settings import LocalSettings
-from utils.api_mediator import APIMediator
+from utils.rancher_mediator import RancherMediator
 from urllib3 import disable_warnings
 from traceback import format_exc
 from config import app_config
@@ -60,7 +60,7 @@ try:
     app_config['rancher']['endpoint'] = r_endpoint
 
     LocalSettings.save()
-    APIMediator.core()
+    RancherMediator.core()
 except KeyboardInterrupt:
     __log.warning(f"{app_config['name']} is preparing to shutdown...")
 except Exception as error:
