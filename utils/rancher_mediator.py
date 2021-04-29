@@ -45,10 +45,12 @@ class RancherMediator:
         log: Log = Log.get_singleton()
         log.error(
             "Something wrong happened!",
+            origin='Rancher',
             args={
                 'Status Code': status_code,
                 'Message': content.get('message')
-            })
+            }
+        )
 
     @staticmethod
     def __add_key_value_pair(key: str, value: Any) -> None:
@@ -77,7 +79,10 @@ class RancherMediator:
     @staticmethod
     def __validate_credentials() -> bool:
         log: Log = Log.get_singleton()
-        log.info("Hold on, let me validate your credentials to proceed...")
+        log.info(
+            "Hold on, let me validate your credentials to proceed...",
+            origin='Rancher'
+        )
 
         status_code: int = 0
         content: dict = {}
@@ -85,19 +90,27 @@ class RancherMediator:
         if status_code != 200:
             log.error(
                 "Unable to authenticate! Consider to check your credentials.",
+                origin='Rancher',
                 args={
                     'Status Code': status_code,
                     'Message': content.get('message')
-                })
+                }
+            )
             return False
 
-        log.info("Cool! I'm ready to use Rancher API :D")
+        log.info(
+            "Cool! I'm ready to use Rancher API :D",
+            origin='Rancher'
+        )
         return True
 
     @staticmethod
     def __try_fetch_clusters() -> bool:
         log: Log = Log.get_singleton()
-        log.info("Let me take a look into your clusters...")
+        log.info(
+            "Let me take a look into your clusters...",
+            origin='Rancher'
+        )
 
         status_code: int = 0
         content: dict = {}
@@ -130,7 +143,9 @@ class RancherMediator:
         log: Log = Log.get_singleton()
         log.info(
             "Seeking for all projects inside cluster "
-            f"'{cluster_name}' [ID: {cluster_id}]...")
+            f"'{cluster_name}' [ID: {cluster_id}]...",
+            origin='Rancher'
+        )
 
         status_code: int = 0
         content: dict = {}
@@ -166,7 +181,9 @@ class RancherMediator:
         log: Log = Log.get_singleton()
         log.info(
             "Seeking for all workloads inside project "
-            f"'{project_name}' [ID: {project_id}]...")
+            f"'{project_name}' [ID: {project_id}]...",
+            origin='Rancher'
+        )
 
         status_code: int = 0
         content: dict = {}
@@ -218,7 +235,10 @@ class RancherMediator:
     @staticmethod
     def core() -> None:
         log: Log = Log.get_singleton()
-        log.info("Initializing internal services!")
+        log.info(
+            "Initializing internal services!",
+            origin='Rancher'
+        )
 
         while True:
             if not RancherMediator.__validate_credentials():
@@ -230,7 +250,9 @@ class RancherMediator:
 
             if not RancherMediator.__try_fetch_clusters():
                 log.error(
-                    "Unable to fetch any cluster! Therefore, I cannot proceed...")
+                    "Unable to fetch any cluster! Therefore, I cannot proceed...",
+                    origin='Rancher'
+                )
                 break
 
             clusters: list = []
@@ -238,21 +260,27 @@ class RancherMediator:
 
             log.info(
                 "Clusters detected in Rancher!",
-                args={'Number of clusters': len(clusters)})
+                origin='Rancher',
+                args={'Number of clusters': len(clusters)}
+            )
 
             for i in range(len(clusters)):
                 cluster: dict = clusters[i]
                 if not RancherMediator.__try_fetch_projects(cluster):
                     log.warning(
                         "Well... There is no project for "
-                        f"cluster '{cluster.get('name')}'.")
+                        f"cluster '{cluster.get('name')}'.",
+                        origin='Rancher'
+                    )
                     continue
 
                 projects: list = cluster.get('projects')
 
                 log.info(
                     f"Projects detected in cluster '{cluster.get('name')}'!",
-                    args={'Number of projects': len(projects)})
+                    origin='Rancher',
+                    args={'Number of projects': len(projects)}
+                )
 
                 for i in range(len(projects)):
                     project: dict = projects[i]
@@ -260,7 +288,9 @@ class RancherMediator:
                         log.warning(
                             "Well... There is no workload for "
                             f"project '{project.get('name')}' "
-                            f"from cluster '{cluster.get('name')}'.")
+                            f"from cluster '{cluster.get('name')}'.",
+                            origin='Rancher'
+                        )
                         continue
 
                     workloads: list = project.get('workloads')
@@ -268,7 +298,9 @@ class RancherMediator:
                     log.info(
                         f"Workloads detected in project '{project.get('name')}'"
                         f" from cluster '{cluster.get('name')}'!",
-                        args={'Number of projects': len(workloads)})
+                        origin='Rancher',
+                        args={'Number of projects': len(workloads)}
+                    )
 
                     for j in range(len(workloads)):
                         workload: dict = workloads[j]
@@ -277,9 +309,14 @@ class RancherMediator:
                                 "Well... There is no container for "
                                 f"workload '{workload.get('name')}' "
                                 f"in project '{project.get('name')}' "
-                                f"from cluster '{cluster.get('name')}'.")
+                                f"from cluster '{cluster.get('name')}'.",
+                                origin='Rancher'
+                            )
                             continue
                 RancherMediator.__try_update_value('clusters', clusters)
             break
 
-        log.warning("All services are preparing to shutdown...")
+        log.warning(
+            "All services are preparing to shutdown...",
+            origin='Rancher'
+        )
