@@ -106,143 +106,145 @@ class MarkdownMediator:
         return reference
 
     @staticmethod
-    def __build_clusters_table(
-            reports: dict, tables: dict, entries: dict) -> str:
-        header: str = tables['clusters']['header']
-        entry: str = tables['clusters']['entry']
-        footer: str = tables['clusters']['footer']
-        report: str = header
+    def __build_markdown(time: datetime, entries: dict) -> str:
+        # Timestamp
+        creation_timestamp: str = time.strftime('%Y-%m-%d %H:%M:%S,%f')
+
+        # Base URl from Rancher domain
         base_url: str = app_config['rancher']['base_url']
+
+        # Templates
+        templates: dict = app_config['templates']
+        reports: dict = templates['reports']
+        tables: dict = templates['tables']
+
+        # Reports templates
+        main_report: str = reports['main']
+        project_report: str = reports['project']
+
+        # Cluster templates
+        clusters_header: str = tables['clusters']['header']
+        clusters_entry: str = tables['clusters']['entry']
+        clusters_footer: str = tables['clusters']['footer']
+        clusters_report: str = clusters_header
+
+        clusters_projects_report: str = ""
         clusters: list = entries.get('clusters')
 
         for i in range(len(clusters)):
+            # Cluster info
             cluster: dict = clusters[i]
-            cluster_report: str = entry
+            cluster_report: str = f"\n{clusters_entry}"
             cluster_id: str = cluster.get('id')
             cluster_name: str = cluster.get('name')
+            cluster_project_number_pods: int = 0
+
+            # Cluster projects info
             cluster_projects: list = cluster.get('projects')
-            number_pods: int = 0
-            number_projects: int = len(cluster_projects)
-            for j in range(len(cluster_projects)):
+            cluster_projects_header: str = tables['projects']['header']
+            cluster_projects_report: str = cluster_projects_header
+            cluster_projects_report_occurrences: dict = {
+                '[CLUSTER_NAME]': cluster_name,
+                '[CLUSTER_ID]': cluster_id
+            }
+            cluster_projects_report = MarkdownMediator.__dynamic_replace(
+                cluster_projects_report,
+                cluster_projects_report_occurrences
+            )
+            cluster_projects_entry: str = tables['projects']['entry']
+
+            # Extra cluster + cluster projects info
+            cluster_number_projects: int = len(cluster_projects)
+            cluster_project_entry_reports: str = ""
+
+            for j in range(cluster_number_projects):
+                # Handle overall project stats per cluster
                 cluster_project: dict = cluster_projects[j]
+                cluster_project_id: str = cluster_project.get('id')
+                cluster_project_name: str = cluster_project.get('name')
                 cluster_project_pods: list = cluster_project.get('workloads')
-                number_pods += len(cluster_project_pods)
+                cluster_project_number_pods += len(cluster_project_pods)
+                cluster_project_report: str = f"\n{cluster_projects_entry}"
+                cluster_project_pods_number: int = len(cluster_project_pods)
+                cluster_project_occurrences: dict = {
+                    '[BASE_URL]': base_url,
+                    '[PROJECT_ID]': cluster_project_id,
+                    '[PROJECT_NAME]': cluster_project_name,
+                    '[NUMBER_PODS]': cluster_project_pods_number,
+                    '[PROJECT_NAME_LOWER]': cluster_project_name.lower().replace(' ', '-')
+                }
+                cluster_project_report = MarkdownMediator.__dynamic_replace(
+                    cluster_project_report,
+                    cluster_project_occurrences
+                )
+                cluster_projects_report += cluster_project_report
 
-            avg_number_pods: int = number_pods
-            if number_projects > 1:
-                avg_number_pods /= number_projects
+                # Handle each project entry report per cluster
+                cluster_project_entry_report: str = project_report
+                cluster_project_entry_report_occurrences: dict = {
+                    '[PROJECT_ID]': cluster_project_id,
+                    '[PROJECT_NAME]': cluster_project_name,
+                    '[CLUSTER_NAME_LOWER]': cluster_name.lower().replace(' ', '-'),
+                    # '[WORKLOADS]': cluster_project_workloads_report
+                }
+                cluster_project_entry_report = MarkdownMediator.__dynamic_replace(
+                    cluster_project_entry_report,
+                    cluster_project_entry_report_occurrences
+                )
+                cluster_project_entry_reports += cluster_project_entry_report
 
-            occurrences: dict = {
+            cluster_project_avg_number_pods: int = cluster_project_number_pods
+            if cluster_number_projects > 1:
+                cluster_project_avg_number_pods /= cluster_number_projects
+
+            # Append cluster report to clusters report
+            cluster_report_occurrences: dict = {
                 '[BASE_URL]': base_url,
                 '[CLUSTER_ID]': cluster_id,
                 '[CLUSTER_NAME]': cluster_name,
                 '[CLUSTER_NAME_LOWER]': cluster_name.lower().replace(' ', '-'),
-                '[NUMBER_PROJECTS]': number_projects,
-                '[NUMBER_PODS]': number_pods,
-                '[AVG_NUMBER_PODS]': f"{avg_number_pods:.3g}"
+                '[NUMBER_PROJECTS]': cluster_number_projects,
+                '[NUMBER_PODS]': cluster_project_number_pods,
+                '[AVG_NUMBER_PODS]': f"{cluster_project_avg_number_pods:.3g}"
             }
             cluster_report = MarkdownMediator.__dynamic_replace(
-                cluster_report, occurrences)
-            report += cluster_report
+                cluster_report,
+                cluster_report_occurrences
+            )
 
-        report += "\n"
-        # occurrences: dict = {
-        #     '[PROJECTS]': all_projects_report
-        # }
-        # footer = MarkdownMediator.__dynamic_replace(footer, occurrences)
-        report += footer
-        return report
+            # Append cluster report to clusters reports
+            clusters_report += f"{cluster_report}\n"
 
-    @staticmethod
-    def __build_projects_table(
-            reports: dict, tables: dict, cluster: dict) -> str:
-        header: str = tables['projects']['header']
-        entry: str = tables['projects']['entry']
-        footer: str = tables['projects']['footer']
-        report: str = header
-        base_url: str = app_config['rancer']['base_url']
-        cluster_id: str = cluster.get('id')
-        projects: list = cluster.get('projects')
-        all_workloads_report: str = ""
-
-        for i in range(len(projects)):
-            project: dict = projects[i]
-            project_report: str = entry
-            project_id: str = project.get('id')
-            project_name: str = project.get('name')
-            project_workloads: list = project.get('workloads')
-            workloads_report: str = MarkdownMediator.__build_workloads_table(
-                tables, project)
-            all_workloads_report += f"\n{workloads_report}"
-            occurrences: dict = {
-                '[BASE_URL]': base_url,
-                '[CLUSTER_ID]': cluster_id,
-                '[PROJECT_ID]': project_id,
-                '[PROJECT_NAME]': project_name,
-                '[PROJECT_NAME_LOWER]': project_name.lower().replace(' ', '-'),
-                '[NUMBER_PODS]': len(project_workloads)
+            cluster_projects_footer: str = tables['projects']['footer']
+            cluster_projects_footer_occurrences = {
+                '[CLUSTER_NAME]': cluster_name,
+                '[PROJECTS]': cluster_project_entry_reports
             }
-            project_report = MarkdownMediator.__dynamic_replace(
-                project_report, occurrences)
-            report += project_report
+            cluster_projects_footer = MarkdownMediator.__dynamic_replace(
+                cluster_projects_footer,
+                cluster_projects_footer_occurrences
+            )
+            cluster_projects_report += f"\n{cluster_projects_footer}"
 
-        cluster_name: str = cluster.get('name')
-        occurrences: dict = {
-            '[CLUSTER_NAME]': cluster_name,
-            '[PROJECTS]': all_workloads_report
+            # Append cluster projects report to clusters projects reports
+            clusters_projects_report += cluster_projects_report
+
+        clusters_footer_occurrences: dict = {
+            '[PROJECTS]': clusters_projects_report
         }
-        footer = MarkdownMediator.__dynamic_replace(footer, occurrences)
-        report += footer
-        return report
+        clusters_footer = MarkdownMediator.__dynamic_replace(
+            clusters_footer,
+            clusters_footer_occurrences)
+        clusters_report += clusters_footer
 
-    @staticmethod
-    def __build_workloads_table(tables: dict, project: dict) -> str:
-        header: str = tables['workloads']['header']
-        entry: str = tables['workloads']['entry']
-        footer: str = tables['workloads']['footer']
-        report: str = header
-        base_url: str = app_config['rancer']['base_url']
-        project_id: str = project.get('id')
-        workloads: list = project.get('workloads')
-
-        for i in range(len(workloads)):
-            workload: dict = workloads[i]
-            workload_report: str = entry
-            workload_id: str = workload.get('id')
-            workload_name: str = workload.get('name')
-            workload_version: str = workload.get('version')
-            workload_namespace: str = workload.get('namespace')
-            occurrences: dict = {
-                '[BASE_URL]': base_url,
-                '[PROJECT_ID]': project_id,
-                '[WORKLOAD_ID]': workload_id,
-                '[WORKLOAD_NAME]': workload_name,
-                '[WORKLOAD_VERSION]': workload_version,
-                '[WORKLOAD_NAMESPACE]': workload_namespace
-            }
-            workload_report = MarkdownMediator.__dynamic_replace(
-                workload_report, occurrences)
-            report += workload_report
-
-        report += footer
-        return report
-
-    @staticmethod
-    def __build_markdown(time: datetime, entries: dict) -> str:
-        templates: dict = app_config['templates']
-        reports: dict = templates['reports']
-        tables: dict = templates['tables']
-        creation_timestamp: str = time.strftime('%Y-%m-%d %H:%M:%S,%f')
-        main_report: str = reports['main']
-        clusters_report: str = MarkdownMediator.__build_clusters_table(
-            reports, tables, entries)
-
-        occurrences: dict = {
+        main_report_occurrences: dict = {
             '[CLUSTERS]': clusters_report,
             '[CREATION_TIMESTAMP]': creation_timestamp
         }
         main_report = MarkdownMediator.__dynamic_replace(
-            main_report, occurrences)
+            main_report,
+            main_report_occurrences
+        )
         return main_report
 
     @staticmethod
@@ -308,8 +310,8 @@ class MarkdownMediator:
         )
 
         templates: dict = app_config['templates']
-        templates = MarkdownMediator.__load_all_templates(templates)
-        app_config['templates'] = templates
+        app_config['templates'] = MarkdownMediator.__load_all_templates(
+            templates)
 
         time: datetime = None
         path: str = None
