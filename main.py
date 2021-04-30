@@ -1,3 +1,4 @@
+from requests.exceptions import ConnectionError
 from utils.reload_credentials import ask_for_new_credentials
 from utils.input_dialogs import confirm_input_dialog
 from extensions.url import format_url, get_base_url
@@ -63,10 +64,18 @@ try:
     RancherMediator.core()
 except KeyboardInterrupt:
     __log.warning(f"{app_config['name']} is preparing to shutdown...")
+except ConnectionError:
+    __log.warning(
+        "There is no connection from Endpoint "
+        f"'{app_config['rancher']['endpoint']}', consider to check "
+        "if Rancher IP is listening for inbound connections.")
 except Exception as error:
     __log.critical(
         f"{app_config['name']} stopped suddenly!",
-        args={'Stacktrace': format_exc()}
+        args={
+            'Exception': type(error),
+            'Stacktrace': format_exc()
+        }
     )
     __exit_code = 1
 finally:
