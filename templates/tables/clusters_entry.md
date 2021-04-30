@@ -1,0 +1,1 @@
+| [**report**](#cluster-[CLUSTER_NAME_LOWER]) | [visit]([BASE_URL]/c/[CLUSTER_ID]/monitoring) | `[CLUSTER_ID]` | `[CLUSTER_NAME]` | **[NUMBER_PROJECTS]** | **~[AVG_NUMBER_PODS] PODs**/project | **[NUMBER_PODS] PODs** |

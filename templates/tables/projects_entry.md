@@ -1,0 +1,1 @@
+| [**report**](#project-[PROJECT_NAME_LOWER]) | [visit]([BASE_URL]/p/[PROJECT_ID]/workloads) | `[PROJECT_ID]` | `[PROJECT_NAME]` | **[NUMBER_PODS] PODs** |

@@ -35,43 +35,30 @@ app_config: dict = {
     },
     'static': {
         'api_keys': '/apikeys',
-        'clusters': '/clusters',
-        'report_template':
-            '# R2MD - Snapshot report\n'
-            '\n'
-            '[![rancher-logo](https://raw.githubusercontent.com/Devwarlt/r2'
-            'md/1887185f20e945d21685904177e79e9fb29e011a/rancher-logo.png)]'
-            '(#r2md-snapshot-report)\n'
-            '\n'
-            '> This report was generated automatically by **R2MD - Rancher '
-            'to Markdown** application at [CREATION_TIMESTAMP]. To contribu'
-            'te visit the public repository [**here**](https://github.com/D'
-            'evwarlt/r2md) :heart: .\n'
-            '\n'
-            '# Clusters\n'
-            '\n'
-            '[CLUSTERS]\n'
-            '\n'
-            '---\n'
-            '\n'
-            '*EOF*',
-        'clusters_table_header_template':
-            '| :notepad_spiral: '
-            '| :link: '
-            '| ID '
-            '| Name '
-            '| Total of projects '
-            '| Total of workloads (avg.) '
-            '| Total of workloads |\n'
-            '| --- | --- | --- | --- | --- | --- | --- |\n',
-        'clusters_table_entry_template':
-            '| [**report**](#cluster-[CLUSTER_NAME]) '
-            '| [visit]([BASE_URL]/c/[CLUSTER_ID]/monitoring) '
-            '| `[CLUSTER_ID]` '
-            '| `[CLUSTER_NAME]` '
-            '| **[NUMBER_PROJECTS]** '
-            '| **~[AVG_NUMBER_PODS] PODs**/project '
-            '| **[NUMBER_PODS] PODs** |'
+        'clusters': '/clusters'
+    },
+    'templates': {
+        'reports': {
+            'main': 'templates/reports/main.md',
+            'project': 'templates/reports/project.md'
+        },
+        'tables': {
+            'clusters': {
+                'header': 'templates/tables/clusters_header.md',
+                'entry': 'templates/tables/clusters_entry.md',
+                'footer': 'templates/tables/clusters_footer.md'
+            },
+            'projects': {
+                'header': 'templates/tables/projects_header.md',
+                'entry': 'templates/tables/projects_entry.md',
+                'footer': 'templates/tables/projects_footer.md'
+            },
+            'workloads': {
+                'header': 'templates/tables/workloads_header.md',
+                'entry': 'templates/tables/workloads_entry.md',
+                'footer': 'templates/tables/workloads_footer.md'
+            }
+        }
     },
     'internal': {}  # this is replaced during runtime
 }
