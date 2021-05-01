@@ -5,10 +5,14 @@
 __pycache__/
 
 # Binaries
+dist/
+[Bb]uild/
 *.exe
 *.zip
 *.rar
 *.7z
+*.pyo
+*.spec
 
 # Logs
 [Ll]ogs/*
