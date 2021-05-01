@@ -1,3 +1,4 @@
+from models.cluster import Cluster
 from utils.markdown_mediator import MarkdownMediator
 from utils.reload_credentials import ask_for_new_credentials
 from utils.input_dialogs import yes_or_no_input_dialog
@@ -317,7 +318,16 @@ class RancherMediator:
                 RancherMediator.__try_update_value('clusters', clusters)
 
             entries: dict = RancherMediator.__get_entries()
-            MarkdownMediator.build_report(entries)
+
+            clusters: list = []
+            clusters_data: list = entries.get('clusters')
+            for i in range(len(clusters_data)):
+                cluster_data: dict = clusters_data[i]
+                cluster: Cluster = Cluster()
+                cluster.serialize(cluster_data)
+                clusters.append(cluster)
+
+            MarkdownMediator.build_report(clusters)
             break
 
         log.warning(
