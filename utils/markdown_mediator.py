@@ -1,51 +1,12 @@
+from models.workload import Workload
+from models.project import Project
+from models.cluster import Cluster
 from utils.local_test_vars import LocalTestVars
 from config import app_config
 from datetime import datetime
 from utils.logger import Log
 from os.path import exists
 from os import mkdir
-
-# Markdown Template structure:
-# templates/reports/main.md
-# |-> [CREATION_TIMESTAMP] <<datetime>>
-# |-> [CLUSTERS] <<list>>
-#     |-> templates/tables/clusters_header.md
-#     |-> templates/tables/clusters_entry.md
-#         |-> [CLUSTER_NAME_LOWER] <<str>>
-#         |-> [BASE_URL] <<str>>
-#         |-> [CLUSTER_ID] <<str>>
-#         |-> [CLUSTER_NAME] <<str>>
-#         |-> [NUMBER_PROJECTS] <<int>>
-#         |-> [AVG_NUMBER_PODS] <<float>>
-#         |-> [NUMBER_PODS] <<int>>
-#     |-> templates/tables/clusters_footer.md
-#         |-> [PROJECTS] <<list>>
-#             |-> templates/tables/projects_header.md
-#                 |-> [CLUSTER_NAME] <<str>>
-#                 |-> [CLUSTER_ID] <<str>>
-#             |-> templates/tables/projects_entry.md
-#                 |-> [PROJECT_NAME_LOWER] <<str>>
-#                 |-> [BASE_URL] <<str>>
-#                 |-> [PROJECT_ID] <<str>>
-#                 |-> [PROJECT_NAME] <<str>>
-#                 |-> [NUMBER_PODS] <<int>>
-#             |-> templates/tables/projects_footer.md
-#                 |-> [CLUSTER_NAME] <<str>>
-#                 |-> [PROJECTS] <<str>>
-#                     |-> templates/reports/project.md
-#                         |-> [CLUSTER_NAME_LOWER] <<str>>
-#                         |-> [PROJECT_ID] <<str>>
-#                         |-> [PROJECT_NAME] <<str>>
-#                         |-> [WORKLOADS] <<list>>
-#                             |-> templates/tables/workloads_header.md
-#                             |-> templates/tables/workloads_entry.md
-#                                 |-> [BASE_URL] <<str>>
-#                                 |-> [PROJECT_ID] <<str>>
-#                                 |-> [WORKLOAD_ID] <<str>>
-#                                 |-> [WORKLOAD_NAMESPACE] <<str>>
-#                                 |-> [WORKLOAD_NAME] <<str>>
-#                                 |-> [WORKLOAD_VERSION] <<str>>
-#                             |-> templates/tables/workloads_footer.md
 
 
 class MarkdownMediator:
@@ -54,198 +15,6 @@ class MarkdownMediator:
 
     def __init__(self) -> None:
         pass
-
-    @staticmethod
-    def __validate_entries(entries: dict) -> bool:
-        log: Log = Log.get_singleton()
-        clusters: list = entries.get('clusters')
-        if not clusters:
-            log.error(
-                "Well... There is no cluster into entries.",
-                origin='Markdown'
-            )
-            return False
-
-        for i in range(len(clusters)):
-            cluster: dict = clusters[i]
-            projects: list = cluster.get('projects')
-            if not projects:
-                log.error(
-                    "Well... There is no project into cluster "
-                    "from entries.", origin='Markdown'
-                )
-                return False
-
-            for j in range(len(projects)):
-                project: dict = projects[j]
-                workloads: list = project.get('workloads')
-                if not workloads:
-                    log.error(
-                        "Well... There is no workload into project "
-                        "at cluster from entries.", origin='Markdown'
-                    )
-                    return False
-        return True
-
-    @staticmethod
-    def __get_unique_report_id() -> tuple:
-        time: datetime = datetime.now()
-        report_id: str = time.strftime('%Y-%m-%d %H.%M.%S.%f')
-        template: str = MarkdownMediator._DEFAULT_PATH
-        return time, template.replace('[ID]', report_id)
-
-    @staticmethod
-    def __save_report(path: str, content: str) -> None:
-        with open(path, 'w') as file:
-            file.write(content)
-
-    @staticmethod
-    def __dynamic_replace(reference: str, occurrences: dict) -> str:
-        for key, value in occurrences.items():
-            reference = reference.replace(key, str(value))
-        return reference
-
-    @staticmethod
-    def __build_markdown(time: datetime, entries: dict) -> str:
-        # Timestamp
-        creation_timestamp: str = time.strftime('%Y-%m-%d %H:%M:%S,%f')
-
-        # Base URl from Rancher domain
-        base_url: str = app_config['rancher']['base_url']
-
-        # Templates
-        templates: dict = app_config['templates']
-        reports: dict = templates['reports']
-        tables: dict = templates['tables']
-
-        # Reports templates
-        main_report: str = reports['main']
-        project_report: str = reports['project']
-
-        # Cluster templates
-        clusters_header: str = tables['clusters']['header']
-        clusters_entry: str = tables['clusters']['entry']
-        clusters_footer: str = tables['clusters']['footer']
-        clusters_report: str = clusters_header
-
-        clusters_projects_report: str = ""
-        clusters: list = entries.get('clusters')
-
-        for i in range(len(clusters)):
-            # Cluster info
-            cluster: dict = clusters[i]
-            cluster_report: str = f"\n{clusters_entry}"
-            cluster_id: str = cluster.get('id')
-            cluster_name: str = cluster.get('name')
-            cluster_project_number_pods: int = 0
-
-            # Cluster projects info
-            cluster_projects: list = cluster.get('projects')
-            cluster_projects_header: str = tables['projects']['header']
-            cluster_projects_report: str = cluster_projects_header
-            cluster_projects_report_occurrences: dict = {
-                '[CLUSTER_NAME]': cluster_name,
-                '[CLUSTER_ID]': cluster_id
-            }
-            cluster_projects_report = MarkdownMediator.__dynamic_replace(
-                cluster_projects_report,
-                cluster_projects_report_occurrences
-            )
-            cluster_projects_entry: str = tables['projects']['entry']
-
-            # Extra cluster + cluster projects info
-            cluster_number_projects: int = len(cluster_projects)
-            cluster_project_entry_reports: str = ""
-
-            for j in range(cluster_number_projects):
-                # Handle overall project stats per cluster
-                cluster_project: dict = cluster_projects[j]
-                cluster_project_id: str = cluster_project.get('id')
-                cluster_project_name: str = cluster_project.get('name')
-                cluster_project_pods: list = cluster_project.get('workloads')
-                cluster_project_number_pods += len(cluster_project_pods)
-                cluster_project_report: str = f"\n{cluster_projects_entry}"
-                cluster_project_pods_number: int = len(cluster_project_pods)
-                cluster_project_occurrences: dict = {
-                    '[BASE_URL]': base_url,
-                    '[PROJECT_ID]': cluster_project_id,
-                    '[PROJECT_NAME]': cluster_project_name,
-                    '[NUMBER_PODS]': cluster_project_pods_number,
-                    '[PROJECT_NAME_LOWER]': cluster_project_name.lower().replace(' ', '-')
-                }
-                cluster_project_report = MarkdownMediator.__dynamic_replace(
-                    cluster_project_report,
-                    cluster_project_occurrences
-                )
-                cluster_projects_report += cluster_project_report
-
-                # Handle each project entry report per cluster
-                cluster_project_entry_report: str = project_report
-                cluster_project_entry_report_occurrences: dict = {
-                    '[PROJECT_ID]': cluster_project_id,
-                    '[PROJECT_NAME]': cluster_project_name,
-                    '[CLUSTER_NAME_LOWER]': cluster_name.lower().replace(' ', '-'),
-                    # '[WORKLOADS]': cluster_project_workloads_report
-                }
-                cluster_project_entry_report = MarkdownMediator.__dynamic_replace(
-                    cluster_project_entry_report,
-                    cluster_project_entry_report_occurrences
-                )
-                cluster_project_entry_reports += cluster_project_entry_report
-
-            cluster_project_avg_number_pods: int = cluster_project_number_pods
-            if cluster_number_projects > 1:
-                cluster_project_avg_number_pods /= cluster_number_projects
-
-            # Append cluster report to clusters report
-            cluster_report_occurrences: dict = {
-                '[BASE_URL]': base_url,
-                '[CLUSTER_ID]': cluster_id,
-                '[CLUSTER_NAME]': cluster_name,
-                '[CLUSTER_NAME_LOWER]': cluster_name.lower().replace(' ', '-'),
-                '[NUMBER_PROJECTS]': cluster_number_projects,
-                '[NUMBER_PODS]': cluster_project_number_pods,
-                '[AVG_NUMBER_PODS]': f"{cluster_project_avg_number_pods:.3g}"
-            }
-            cluster_report = MarkdownMediator.__dynamic_replace(
-                cluster_report,
-                cluster_report_occurrences
-            )
-
-            # Append cluster report to clusters reports
-            clusters_report += f"{cluster_report}\n"
-
-            cluster_projects_footer: str = tables['projects']['footer']
-            cluster_projects_footer_occurrences = {
-                '[CLUSTER_NAME]': cluster_name,
-                '[PROJECTS]': cluster_project_entry_reports
-            }
-            cluster_projects_footer = MarkdownMediator.__dynamic_replace(
-                cluster_projects_footer,
-                cluster_projects_footer_occurrences
-            )
-            cluster_projects_report += f"\n{cluster_projects_footer}"
-
-            # Append cluster projects report to clusters projects reports
-            clusters_projects_report += cluster_projects_report
-
-        clusters_footer_occurrences: dict = {
-            '[PROJECTS]': clusters_projects_report
-        }
-        clusters_footer = MarkdownMediator.__dynamic_replace(
-            clusters_footer,
-            clusters_footer_occurrences)
-        clusters_report += clusters_footer
-
-        main_report_occurrences: dict = {
-            '[CLUSTERS]': clusters_report,
-            '[CREATION_TIMESTAMP]': creation_timestamp
-        }
-        main_report = MarkdownMediator.__dynamic_replace(
-            main_report,
-            main_report_occurrences
-        )
-        return main_report
 
     @staticmethod
     def __load_all_templates(templates: dict) -> dict:
@@ -281,18 +50,298 @@ class MarkdownMediator:
             return file.read()
 
     @staticmethod
-    def build_report(entries: dict) -> None:
+    def __validate_serialized_data(clusters: list) -> bool:
         log: Log = Log.get_singleton()
-
-        if not entries:
+        if not clusters:
             log.error(
-                "Unable to build report without entries! "
-                "Therefore, I cannot proceed...",
+                "D'oh! There is no cluster.",
                 origin='Markdown'
             )
-            return
+            return False
 
-        if not MarkdownMediator.__validate_entries(entries):
+        for i in range(len(clusters)):
+            cluster: Cluster = clusters[i]
+            if not cluster.is_valid():
+                log.error(
+                    "D'oh! This cluster is invalid.",
+                    origin='Markdown',
+                    args={
+                        'Cluster': cluster.to_string(),
+                        'Blame': cluster.blame()
+                    }
+                )
+                return False
+
+            projects: list = cluster.get_projects()
+            for j in range(len(projects)):
+                project: Project = projects[j]
+                if not project.is_valid():
+                    log.error(
+                        "D'oh! This project is invalid.",
+                        origin='Markdown',
+                        args={
+                            'Project': project.to_string(),
+                            'Blame': project.blame()
+                        }
+                    )
+                    return False
+
+                workloads: list = project.get_workloads()
+                for k in range(len(workloads)):
+                    workload: Workload = workloads[k]
+                    if not workload.is_valid():
+                        log.error(
+                            "D'oh! This workload is invalid.",
+                            origin='Markdown',
+                            args={
+                                'Workload': workload.to_string(),
+                                'Blame': workload.blame()
+                            }
+                        )
+                        return False
+        return True
+
+    @staticmethod
+    def __get_unique_report_id() -> tuple:
+        time: datetime = datetime.now()
+        report_id: str = time.strftime('%Y-%m-%d %H.%M.%S.%f')
+        template: str = MarkdownMediator._DEFAULT_PATH
+        return time, template.replace('[ID]', report_id)
+
+    @staticmethod
+    def __save_report(path: str, content: str) -> None:
+        with open(path, 'w') as file:
+            file.write(content)
+
+    @staticmethod
+    def __keys_replace(reference: str, **kwargs: dict) -> str:
+        for formatted_key, value in kwargs.items():
+            formatted_key: str = f"[{formatted_key.upper()}]"
+            formatted_key = formatted_key.replace(' ', '-')
+            reference = reference.replace(formatted_key, str(value))
+        return reference
+
+    @staticmethod
+    def __make_workloads_table(
+        templates: dict, project: Project
+    ) -> str:
+        # Templates
+        tables_template: dict = templates['tables']
+        header_template: str = tables_template['workloads']['header']
+        entry_template: str = tables_template['workloads']['entry']
+        footer_template: str = tables_template['workloads']['footer']
+
+        # Base URl from Rancher domain
+        base_url: str = app_config['rancher']['base_url']
+
+        table_header: str = header_template
+        table: str = table_header
+        table += "\n"
+
+        table_entries: list = []
+
+        workloads: list = project.get_workloads()
+        for i in range(len(workloads)):
+            workload: Workload = workloads[i]
+
+            table_entry: str = entry_template
+            table_entry = MarkdownMediator.__keys_replace(
+                table_entry,
+                **{
+                    'base_url': base_url,
+                    'project_id': project.get_id(),
+                    'workload_id': workload.get_id(),
+                    'workload_namespace': workload.get_namespace(),
+                    'workload_name': workload.get_name(),
+                    'workload_version': workload.get_version()
+                }
+            )
+            table_entries.append(table_entry)
+
+        table += "\n".join(table_entries)
+        table += "\n"
+
+        table_footer: str = footer_template
+        table += table_footer
+        return table
+
+    @staticmethod
+    def __make_project_report(
+        templates: dict, cluster: Cluster, project: Project
+    ) -> str:
+        # Templates
+        reports_template: dict = templates['reports']
+        report_template: str = reports_template['project']
+
+        report: str = report_template
+        report = MarkdownMediator.__keys_replace(
+            report,
+            **{
+                'project_name': project.get_name(),
+                'cluster_name_lower': cluster.get_name().lower(),
+                'project_id': project.get_id(),
+                'workloads': MarkdownMediator.
+                __make_workloads_table(templates, project)
+            }
+        )
+        return report
+
+    @staticmethod
+    def __make_cluster_projects_table(
+        templates: dict, cluster: Cluster
+    ) -> str:
+        # Templates
+        tables_template: dict = templates['tables']
+        header_template: str = tables_template['projects']['header']
+        entry_template: str = tables_template['projects']['entry']
+        footer_template: str = tables_template['projects']['footer']
+
+        # Base URl from Rancher domain
+        base_url: str = app_config['rancher']['base_url']
+
+        table_header: str = header_template
+        table_header = MarkdownMediator.__keys_replace(
+            table_header,
+            **{
+                'cluster_name': cluster.get_name(),
+                'cluster_id': cluster.get_id()
+            }
+        )
+        table: str = table_header
+        table += "\n"
+
+        table_entries: list = []
+
+        projects: list = cluster.get_projects()
+        for i in range(len(projects)):
+            project: Project = projects[i]
+            name: str = project.get_name()
+
+            table_entry: str = entry_template
+            table_entry = MarkdownMediator.__keys_replace(
+                table_entry,
+                **{
+                    'project_name_lower': name.lower(),
+                    'base_url': base_url,
+                    'project_id': project.get_id(),
+                    'project_name': name,
+                    'number_pods': project.get_total_pods()
+                }
+            )
+            table_entries.append(table_entry)
+
+        table += "\n".join(table_entries)
+        table += "\n"
+
+        table_footer: str = footer_template
+        table_footer = MarkdownMediator.__keys_replace(
+            table_footer,
+            **{
+                'cluster_name': cluster.get_name(),
+                'projects': "\n\n".join(
+                    MarkdownMediator
+                    .__make_project_report(templates, cluster, project)
+                    for project in projects
+                )
+            }
+        )
+        table += table_footer
+        return table
+
+    @staticmethod
+    def __make_clusters_table(templates: dict, clusters: list) -> str:
+        # Templates
+        tables_template: dict = templates['tables']
+        header_template: str = tables_template['clusters']['header']
+        entry_template: str = tables_template['clusters']['entry']
+        footer_template: str = tables_template['clusters']['footer']
+
+        # Base URl from Rancher domain
+        base_url: str = app_config['rancher']['base_url']
+
+        table_header: str = header_template
+        table: str = table_header
+        table += "\n"
+
+        table_entries: list = []
+
+        for i in range(len(clusters)):
+            cluster: Cluster = clusters[i]
+            name: str = cluster.get_name()
+            projects: list = cluster.get_projects()
+            num_projects: int = len(projects)
+            num_pods: int = cluster.get_total_pods()
+            avg_num_pods: int = num_pods
+            if num_projects > 1:
+                avg_num_pods /= num_projects
+
+            table_entry: str = entry_template
+            table_entry = MarkdownMediator.__keys_replace(
+                table_entry,
+                **{
+                    'cluster_name_lower': name.lower(),
+                    'base_url': base_url,
+                    'cluster_id': cluster.get_id(),
+                    'cluster_name': name,
+                    'number_projects': num_projects,
+                    'avg_number_pods': f"{avg_num_pods:.3g}",
+                    'number_pods': num_pods
+                }
+            )
+            table_entries.append(table_entry)
+
+        table += "\n".join(table_entries)
+        table += "\n"
+
+        table_footer: str = footer_template
+        table_footer = MarkdownMediator.__keys_replace(
+            table_footer,
+            **{
+                'projects': "\n".join(
+                    MarkdownMediator
+                    .__make_cluster_projects_table(templates, cluster)
+                    for cluster in clusters
+                )
+            }
+        )
+        table += table_footer
+        return table
+
+    @staticmethod
+    def __make_report(
+        templates: dict, time: datetime, clusters: list
+    ) -> str:
+        # Timestamp
+        creation_timestamp: str = time.strftime('%Y-%m-%d %H:%M:%S,%f')
+
+        # Templates
+        reports_template: dict = templates['reports']
+        main_report_template: str = reports_template['main']
+
+        # Make & fill clusters table
+        clusters_table_info: str = MarkdownMediator\
+            .__make_clusters_table(templates, clusters)
+
+        # Make main report
+        main_report: str = main_report_template
+        main_report = MarkdownMediator.__keys_replace(
+            main_report,
+            **{
+                'clusters': clusters_table_info,
+                'creation_timestamp': creation_timestamp
+            }
+        )
+        return main_report
+
+    @staticmethod
+    def build_report(clusters: list) -> None:
+        log: Log = Log.get_singleton()
+
+        if not MarkdownMediator.__validate_serialized_data(clusters):
+            log.error(
+                "Unable to build report without valid data!",
+                origin='Markdown'
+            )
             return
 
         if not exists(MarkdownMediator._DEFAULT_DIR):
@@ -310,17 +359,22 @@ class MarkdownMediator:
         )
 
         templates: dict = app_config['templates']
-        app_config['templates'] = MarkdownMediator.__load_all_templates(
+        templates = MarkdownMediator.__load_all_templates(
             templates)
 
         time: datetime = None
         path: str = None
         time, path = MarkdownMediator.__get_unique_report_id()
-        report = MarkdownMediator.__build_markdown(time, entries)
+        report = MarkdownMediator.__make_report(templates, time, clusters)
         MarkdownMediator.__save_report(path, report)
 
+        clusters_data: list = []
+        for i in range(len(clusters)):
+            cluster: Cluster = clusters[i]
+            clusters_data.append(cluster.to_string())
+
         ltv: LocalTestVars = LocalTestVars(__file__, 'entries')
-        ltv.handle(entries)
+        ltv.handle(clusters_data)
 
         log.info(
             f"Done! Your report is at '{path}'.",
