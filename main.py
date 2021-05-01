@@ -62,6 +62,10 @@ try:
 
     LocalSettings.save()
     RancherMediator.core()
+
+    __log.info("Press ANY key to quit.")
+
+    input()
 except KeyboardInterrupt:
     __log.warning(f"{app_config['name']} is preparing to shutdown...")
 except ConnectionError:
