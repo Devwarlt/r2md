@@ -1,4 +1,3 @@
-
 ### Project: `[PROJECT_NAME]`
 
 > Back to the [**cluster reference**](#cluster-[CLUSTER_NAME_LOWER]).
